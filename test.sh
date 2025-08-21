@@ -13,6 +13,15 @@ readonly GIT_CRYPT_REMOTE_URL="rclone://${RCLONE_REMOTE_CRYPT}"
 readonly TEST_FILE1="testfile1"
 readonly TEST_FILE2="testfile2"
 
+setup_path()
+{
+	export PATH="${base}:${PATH}"
+	if [ "$(realpath "$(which git-remote-rclone)")" != "$(realpath "${base}/git-remote-rclone")" ]; then
+		echo "Loaded 'git-remote-rclone' at $(realpath "$(which git-remote-rclone)") is not the same as repos 'git-remote-rclone' at $(realpath "${base}/git-remote-rclone")"
+		exit 1
+	fi
+}
+
 cleanup()
 {
 	if [ -d "${TEST_DIR}" ]; then
@@ -131,7 +140,7 @@ test_clone_repo()
 {
 	set -xe
 	local remote_url="${1?missing remote_url}"
-	git -C "${TEST_DIR}" clone -b master "${remote_url}" "${SECOND_REPO}"
+	git -C "${TEST_DIR}" clone -b master "${remote_url/:\/\//::}" "${SECOND_REPO}"
 }
 
 test_pull_repo()
@@ -220,6 +229,7 @@ tests()
 main()
 {
 	cleanup
+	setup_path
 	setup_test_dir
 	setup_rclone_config
 	setup_remote_repo

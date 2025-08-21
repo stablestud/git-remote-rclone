@@ -34,11 +34,13 @@ class RCloneRemote(object):
         """
         gitdir:    Path to the GITDIR of the repository to operate on (provided by Git).
         remote:    Remote label to use (provided by Git).
-        url:       rclone: //-type URL of the remote (provided by Git).
+        url:       rclone://-type or rclone:: URL of the remote (provided by Git).
         instream:  Stream to read communication from Git from.
         outstream: Stream to communicate outcomes to Git.
         errstream: Stream for logging.
         """
+        if not url.startswith("rclone://"):
+            url = "rclone://" + url
         self.parsed_url = urlparse(url)
         self.remote = remote
         # internal logic relies on workdir to be an absolute path
