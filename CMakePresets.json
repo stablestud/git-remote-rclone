@@ -1,0 +1,145 @@
+{
+	"version": 6,
+	"configurePresets": [
+		{
+			"name": "release",
+			"binaryDir": "build.release",
+			"cacheVariables": {
+				"DEBUG": "OFF"
+			}
+		},
+		{
+			"name": "debug",
+			"binaryDir": "build.debug",
+			"cacheVariables": {
+				"DEBUG": "ON"
+			}
+		}
+	],
+
+	"buildPresets": [
+		{
+			"name": "release",
+			"configurePreset": "release",
+			"targets": ["git-remote-rclone"]
+		},
+		{
+			"name": "test_integration",
+			"configurePreset": "debug",
+			"targets": ["test_integration", "git-remote-rclone"]
+		},
+		{
+			"name": "test_githlpr",
+			"configurePreset": "debug",
+			"targets": ["test_githlpr"]
+		},
+		{
+			"name": "test_utils",
+			"configurePreset": "debug",
+			"targets": ["test_utils"]
+		},
+		{
+			"name": "test_all",
+			"configurePreset": "debug",
+			"targets": [
+				"test_githlpr",
+				"test_integration",
+				"git-remote-rclone"
+			]
+		},
+		{
+			"name": "tools-run-interactive-proto",
+			"configurePreset": "debug",
+			"targets": [
+				"tools-run-interactive-proto"
+			]
+		}
+	],
+
+	"testPresets": [
+		{
+			"name": "test_integration",
+			"configurePreset": "debug",
+			"filter": {
+				"include": {
+					"name": "test_integration"
+				}
+			},
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "test_githlpr",
+			"configurePreset": "debug",
+			"filter": {
+				"include": {
+					"name": "test_githlpr"
+				}
+			},
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "test_utils",
+			"configurePreset": "debug",
+			"filter": {
+				"include": {
+					"name": "test_utils"
+				}
+			},
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "test_all",
+			"configurePreset": "debug",
+			"output": {
+				"outputOnFailure": true
+			}
+		}
+	],
+
+	"workflowPresets": [
+		{
+			"name": "release",
+			"steps": [
+				{ "type": "configure", "name": "release" },
+				{ "type": "build", "name": "release" }
+			]
+		},
+		{
+			"name": "test_integration",
+			"steps": [
+				{ "type": "configure", "name": "debug" },
+				{ "type": "build", "name": "test_integration" },
+				{ "type": "test", "name": "test_integration" }
+			]
+		},
+		{
+			"name": "test_githlpr",
+			"steps": [
+				{ "type": "configure", "name": "debug" },
+				{ "type": "build", "name": "test_githlpr" },
+				{ "type": "test", "name": "test_githlpr" }
+			]
+		},
+		{
+			"name": "test_all",
+			"steps": [
+				{ "type": "configure", "name": "debug" },
+				{ "type": "build", "name": "test_all" },
+				{ "type": "test", "name": "test_all" }
+			]
+		},
+		{
+			"name": "tools-run-interactive-proto",
+			"steps": [
+				{ "type": "configure", "name": "debug" },
+				{ "type": "build", "name": "tools-run-interactive-proto" }
+			]
+		}
+	]
+}
