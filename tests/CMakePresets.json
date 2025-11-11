@@ -1,0 +1,109 @@
+{
+	"version": 6,
+	"configurePresets": [
+		{
+			"name": "tests",
+			"binaryDir": "build.tests",
+			"cacheVariables": {
+				"DEBUG": "ON"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "test_integration",
+			"configurePreset": "tests",
+			"targets": ["test_integration", "git-remote-rclone"]
+		},
+		{
+			"name": "test_githlpr",
+			"configurePreset": "tests",
+			"targets": ["test_githlpr"]
+		},
+		{
+			"name": "test_utils",
+			"configurePreset": "tests",
+			"targets": ["test_utils"]
+		},
+	{
+			"name": "tests",
+			"configurePreset": "tests",
+			"targets": [
+				"test_githlpr",
+				"test_utils",
+				"test_integration"
+			]
+		}
+	],
+	"testPresets": [
+		{
+			"name": "test_integration",
+			"configurePreset": "tests",
+			"filter": {
+				"include": {
+					"name": "test_integration"
+				}
+			},
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "test_githlpr",
+			"configurePreset": "tests",
+			"filter": {
+				"include": {
+					"name": "test_githlpr"
+				}
+			},
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "test_utils",
+			"configurePreset": "tests",
+			"filter": {
+				"include": {
+					"name": "test_utils"
+				}
+			},
+			"output": {
+				"outputOnFailure": true
+			}
+		},
+		{
+			"name": "tests",
+			"configurePreset": "tests",
+			"output": {
+				"outputOnFailure": true
+			}
+		}
+	],
+	"workflowPresets": [
+		{
+			"name": "test_integration",
+			"steps": [
+				{ "type": "configure", "name": "tests" },
+				{ "type": "build", "name": "test_integration" },
+				{ "type": "test", "name": "test_integration" }
+			]
+		},
+		{
+			"name": "test_githlpr",
+			"steps": [
+				{ "type": "configure", "name": "tests" },
+				{ "type": "build", "name": "test_githlpr" },
+				{ "type": "test", "name": "test_githlpr" }
+			]
+		},
+		{
+			"name": "tests",
+			"steps": [
+				{ "type": "configure", "name": "tests" },
+				{ "type": "build", "name": "tests" },
+				{ "type": "test", "name": "tests" }
+			]
+		}
+	]
+}

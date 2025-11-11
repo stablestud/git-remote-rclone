@@ -1,0 +1,30 @@
+{
+	"version": 6,
+	"configurePresets": [
+		{
+			"name": "tools",
+			"binaryDir": "build.tools",
+			"cacheVariables": {
+				"DEBUG": "ON"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "run-git-remote-interactive-proto",
+			"configurePreset": "tools",
+			"targets": [
+				"run-git-remote-interactive-proto"
+			]
+		}
+	],
+	"workflowPresets": [
+		{
+			"name": "run-git-remote-interactive-proto",
+			"steps": [
+				{ "type": "configure", "name": "tools" },
+				{ "type": "build", "name": "run-git-remote-interactive-proto" }
+			]
+		}
+	]
+}

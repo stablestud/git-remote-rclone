@@ -1,14 +1,3 @@
-include(FetchContent)
-FetchContent_Declare(
-	doctest
-	GIT_REPOSITORY https://github.com/doctest/doctest.git
-	GIT_TAG v2.4.12
-	GIT_SHALLOW True
-)
-FetchContent_MakeAvailable(doctest)
-
-enable_testing()
-
 add_executable(test_integration test_integration.cpp)
 target_include_directories(test_integration PRIVATE ./include)
 target_link_libraries(test_integration PRIVATE doctest::doctest)

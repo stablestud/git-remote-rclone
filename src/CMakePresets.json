@@ -1,0 +1,28 @@
+{
+	"version": 6,
+	"configurePresets": [
+		{
+			"name": "release",
+			"binaryDir": "build.release",
+			"cacheVariables": {
+				"DEBUG": "OFF"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "release",
+			"configurePreset": "release",
+			"targets": ["git-remote-rclone"]
+		}
+	],
+	"workflowPresets": [
+		{
+			"name": "release",
+			"steps": [
+				{ "type": "configure", "name": "release" },
+				{ "type": "build", "name": "release" }
+			]
+		}
+	]
+}
