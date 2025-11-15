@@ -6,6 +6,6 @@ target_link_libraries(git-remote-interactive-proto-runner PRIVATE doctest::docte
 
 add_custom_target(run-git-remote-interactive-proto
 		COMMAND BINARY_SEARCH_PATH=$<TARGET_FILE_DIR:git-remote-interactive-proto> $<TARGET_FILE:git-remote-interactive-proto-runner>
-		DEPENDS git-remote-interactive-proto-runner git-remote-interactive-proto
+		DEPENDS git-remote-interactive-proto-runner git-remote-interactive-proto-attach git-remote-interactive-proto
 		COMMENT "Running interactive git-remote-helper protocol inspector..."
 		USES_TERMINAL)

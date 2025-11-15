@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
 {
 	toolsutils::self = std::filesystem::path(argv[0]).filename();
 	toolsutils::fd_t socket = toolsutils::create_socket();
+	std::cerr << "\n\n" << toolsutils::self << ": you can attach now with: ./build.tools/tools/git-remote-interactive-proto-attach\n" << std::endl;
 	const toolsutils::fd_t client{listen_socket(socket)};
 	toolsutils::transfer_loop(client, toolsutils::stdin_fd, toolsutils::stdout_fd);
 }
