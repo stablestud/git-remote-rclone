@@ -137,7 +137,7 @@ namespace testutils
 		}
 	};
 
-	static std::filesystem::path WORKDIR;
+	std::filesystem::path WORKDIR;
 
 	bool is_strm_eof(std::istream& strm)
 	{
@@ -349,7 +349,7 @@ namespace testutils::git
 
 	void append_test_data(const git_repo& repo)
 	{
-		const std::filesystem::path path(repo.get_repo_path() / "testfile");	
+		const std::filesystem::path path(repo.get_repo_path() / "testfile");
 		std::ofstream testfile{path};
 		testfile << "append@" << std::to_string(repo.get_ncommits()) << ":" << get_rnd_hex_str(16) << std::endl;
 	}

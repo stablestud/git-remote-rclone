@@ -7,7 +7,6 @@
 #include <cstdlib>
 
 #include "githlpr.hpp"
-#include "utils.hpp"
 
 namespace githlpr::cmds
 {

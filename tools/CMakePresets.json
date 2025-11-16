@@ -5,7 +5,8 @@
 			"name": "tools",
 			"binaryDir": "build.tools",
 			"cacheVariables": {
-				"DEBUG": "ON"
+				"DEBUG": "ON",
+				"TYPE": "TOOLS"
 			}
 		}
 	],

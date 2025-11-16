@@ -13,7 +13,6 @@
 #include "testutils.hpp"
 
 #include "githlpr.hpp"
-#include "utils.hpp"
 
 const int cap_reply_line_count = 1;
 

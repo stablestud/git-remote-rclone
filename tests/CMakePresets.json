@@ -5,7 +5,8 @@
 			"name": "tests",
 			"binaryDir": "build.tests",
 			"cacheVariables": {
-				"DEBUG": "ON"
+				"DEBUG": "ON",
+				"TYPE": "TESTS"
 			}
 		}
 	],
@@ -21,16 +22,10 @@
 			"targets": ["test_githlpr"]
 		},
 		{
-			"name": "test_utils",
-			"configurePreset": "tests",
-			"targets": ["test_utils"]
-		},
-	{
 			"name": "tests",
 			"configurePreset": "tests",
 			"targets": [
 				"test_githlpr",
-				"test_utils",
 				"test_integration"
 			]
 		}
@@ -54,18 +49,6 @@
 			"filter": {
 				"include": {
 					"name": "test_githlpr"
-				}
-			},
-			"output": {
-				"outputOnFailure": true
-			}
-		},
-		{
-			"name": "test_utils",
-			"configurePreset": "tests",
-			"filter": {
-				"include": {
-					"name": "test_utils"
 				}
 			},
 			"output": {

@@ -2,7 +2,6 @@ add_executable(git-remote-interactive-proto git-remote-interactive-proto.cpp)
 add_executable(git-remote-interactive-proto-attach git-remote-interactive-proto-attach.cpp)
 add_executable(git-remote-interactive-proto-runner git-remote-interactive-proto-runner.cpp)
 target_include_directories(git-remote-interactive-proto-runner PRIVATE ../tests)
-target_link_libraries(git-remote-interactive-proto-runner PRIVATE doctest::doctest)
 
 add_custom_target(run-git-remote-interactive-proto
 		COMMAND BINARY_SEARCH_PATH=$<TARGET_FILE_DIR:git-remote-interactive-proto> $<TARGET_FILE:git-remote-interactive-proto-runner>
