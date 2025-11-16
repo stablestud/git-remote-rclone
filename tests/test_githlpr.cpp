@@ -18,7 +18,7 @@ const int cap_reply_line_count = 1;
 
 static bool is_ping_reply(std::istream& strm)
 {
-	return githlpr::ping_reply == testutils::getline(strm);
+	return githlpr::replies::ping_reply == testutils::getline(strm);
 }
 
 TEST_CASE("has_valid_git_dir() should return false if GIT_DIR is unset")
@@ -143,7 +143,7 @@ TEST_SUITE("process_git_cmds()")
 
 			CHECK(is_ping_reply(git_reply_strm));
 			testutils::getline(git_reply_strm); // skip over blank line
-			CHECK_EQ(githlpr::capabilities, testutils::getline(git_reply_strm));
+			CHECK_EQ(githlpr::replies::capabilities, testutils::getline(git_reply_strm));
 		}
 
 		SUBCASE("should reply to cmds in order they were received (inside blocks)")
@@ -155,7 +155,7 @@ TEST_SUITE("process_git_cmds()")
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 
 			CHECK(is_ping_reply(git_reply_strm));
-			CHECK_EQ(githlpr::capabilities, testutils::getline(git_reply_strm));
+			CHECK_EQ(githlpr::replies::capabilities, testutils::getline(git_reply_strm));
 		}
 	}
 
@@ -200,7 +200,7 @@ TEST_SUITE("process_git_cmds()")
 
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 
-			CHECK_EQ(githlpr::capabilities, testutils::getline(git_reply_strm));
+			CHECK_EQ(githlpr::replies::capabilities, testutils::getline(git_reply_strm));
 			// No more capabilities should be replied
 			CHECK(testutils::getline(git_reply_strm).empty());
 		}

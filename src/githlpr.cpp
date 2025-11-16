@@ -1,6 +1,8 @@
 #include <filesystem>
 #include <ios>
 #include <iostream>
+#include <string>
+#include <string_view>
 #include <sstream>
 #include <stdexcept>
 
@@ -8,15 +10,51 @@
 
 #include "githlpr.hpp"
 
-namespace githlpr::cmds
+namespace
 {
-	const std::string caps{"capabilities"};
-	const std::string push{"push"};
-	const std::string ping{"ping"};
-}
+	enum class git_cmd_t {
+		CAPABILITIES,
+		PING,
+		PUSH,
+		UNKNOWN,
+		ENDL
+	};
 
-const std::string githlpr::capabilities{"push"};
-const std::string githlpr::ping_reply{"pong"};
+	std::string get_nth_str_word(const std::string_view& str, const size_t n)
+	{
+		std::istringstream cmdstr{std::string(str)};
+		std::string word_n{};
+		for (size_t i{}; i < n; i++) {
+			cmdstr >> std::skipws >> word_n;
+		}
+		return word_n;
+	}
+
+	std::string get_push_dst(const std::string_view& push_args)
+	{
+		size_t colon_pos{push_args.find(':')};
+		if (std::string_view::npos == colon_pos) {
+			throw std::runtime_error("could not parse dst from push arguments");
+		}
+		colon_pos += 1;
+		return get_nth_str_word(push_args.substr(colon_pos, push_args.length() - colon_pos), 1);
+	}
+
+	git_cmd_t get_cmd_type(const std::string_view& cmd)
+	{
+		if        (cmd == githlpr::cmds::caps) {
+			return git_cmd_t::CAPABILITIES;
+		} else if (cmd == githlpr::cmds::push) {
+			return git_cmd_t::PUSH;
+		} else if (cmd == githlpr::cmds::ping) {
+			return git_cmd_t::PING;
+		} else if (cmd.empty()) {
+			return git_cmd_t::ENDL;
+		} else {
+			return git_cmd_t::UNKNOWN;
+		}
+	}
+}
 
 bool githlpr::has_valid_git_dir_env()
 {
@@ -24,49 +62,6 @@ bool githlpr::has_valid_git_dir_env()
 		return std::filesystem::is_directory(cgit_dir);
 	}
 	return false;
-}
-
-enum git_cmd_t {
-	CAPABILITIES,
-	PING,
-	PUSH,
-	UNKNOWN,
-	ENDL
-};
-
-static std::string get_nth_str_word(const std::string_view& str, const size_t n)
-{
-	std::istringstream cmdstr{std::string(str)};
-	std::string word_n{};
-	for (size_t i{}; i < n; i++) {
-		cmdstr >> std::skipws >> word_n;
-	}
-	return word_n;
-}
-
-static std::string get_push_dst(const std::string_view& push_args)
-{
-	size_t colon_pos{push_args.find(':')};
-	if (std::string_view::npos == colon_pos) {
-		throw std::runtime_error("could not parse dst from push arguments");
-	}
-	colon_pos += 1;
-	return get_nth_str_word(push_args.substr(colon_pos, push_args.length() - colon_pos), 1);
-}
-
-static git_cmd_t get_cmd_type(const std::string_view& cmd)
-{
-	if        (cmd == githlpr::cmds::caps) {
-		return git_cmd_t::CAPABILITIES;
-	} else if (cmd == githlpr::cmds::push) {
-		return git_cmd_t::PUSH;
-	} else if (cmd == githlpr::cmds::ping) {
-		return git_cmd_t::PING;
-	} else if (cmd.empty()) {
-		return git_cmd_t::ENDL;
-	} else {
-		return git_cmd_t::UNKNOWN;
-	}
 }
 
 bool githlpr::process_git_cmds(std::istream& input, std::ostream& output)
@@ -89,7 +84,7 @@ bool githlpr::process_git_cmds(std::istream& input, std::ostream& output)
 				break;
 			case git_cmd_t::PING:
 				in_block = true;
-				reply_buf << ping_reply << std::endl;
+				reply_buf << replies::ping_reply << std::endl;
 				break;
 			case git_cmd_t::ENDL:
 				if (in_block) {
