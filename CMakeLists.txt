@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 option(DEBUG "build with debugging flags / define DEBUG" OFF)
+option(SCOPE "configure what parts of the project should be build: RELEASE/TESTS/TOOLS" "RELEASE")
 
 get_filename_component(BUILD_DIR "${CMAKE_BINARY_DIR}" NAME)
 
@@ -17,11 +18,12 @@ else()
 	message(STATUS "Configuring ${BUILD_DIR} as RELEASE build")
 endif()
 
-if(${TYPE} STREQUAL "TESTS")
+if(${SCOPE} STREQUAL "RELEASE")
+	add_subdirectory(src)
+elseif(${SCOPE} STREQUAL "TESTS")
 	enable_testing()
+	add_subdirectory(src)
 	add_subdirectory(tests)
-elseif(${TYPE} STREQUAL "TOOLS")
+elseif(${SCOPE} STREQUAL "TOOLS")
 	add_subdirectory(tools)
 endif()
-
-add_subdirectory(src)

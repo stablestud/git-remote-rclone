@@ -5,7 +5,8 @@
 			"name": "release",
 			"binaryDir": "build.release",
 			"cacheVariables": {
-				"DEBUG": "OFF"
+				"DEBUG": "OFF",
+				"SCOPE": "RELEASE"
 			}
 		}
 	],

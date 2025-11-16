@@ -6,7 +6,7 @@
 			"binaryDir": "build.tests",
 			"cacheVariables": {
 				"DEBUG": "ON",
-				"TYPE": "TESTS"
+				"SCOPE": "TESTS"
 			}
 		}
 	],
