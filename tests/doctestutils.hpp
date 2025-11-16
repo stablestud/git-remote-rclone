@@ -22,7 +22,7 @@ namespace doctestutils
                         const std::filesystem::path self(argv[0]);
                         context.applyCommandLine(argc, argv);
                         testutils::setup::setup_workdir(self.parent_path() / test_name);
-                } catch(const std::runtime_error err) {
+                } catch(const std::runtime_error& err) {
                         std::cerr << test_name << ": failed to setup test: " << err.what() << std::endl;
                         std::exit(EXIT_FAILURE);
                 }

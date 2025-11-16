@@ -302,7 +302,7 @@ namespace testutils::git
 
 		friend git_repo init_repo(const std::filesystem::path&);
 	protected:
-		explicit git_repo(const std::filesystem::path repo) : repo(repo), ncommits(1) {}
+		explicit git_repo(const std::filesystem::path repo) : ncommits(1), repo(repo) {}
 	public:
 		int trigger_ncommits()
 		{

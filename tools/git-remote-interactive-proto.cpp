@@ -30,7 +30,7 @@ namespace
 	}
 }
 
-int main(int argc, char* argv[])
+int main(const int /* argc */, const char *const argv[])
 {
 	toolsutils::self = std::filesystem::path(argv[0]).filename();
 	toolsutils::fd_t socket = toolsutils::create_socket();

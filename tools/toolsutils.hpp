@@ -94,7 +94,7 @@ namespace toolsutils
 		} else if (bytes == 0) {
 			return true; // EOF reached
 		}
-		if (bytes = ::splice(pipe.get_read_fd(), NULL, to.get(), NULL, bytes, SPLICE_F_MORE | SPLICE_F_MOVE); -1 == bytes) {
+		if (bytes = ::splice(pipe.get_read_fd(), NULL, to.get(), NULL, static_cast<size_t>(bytes), SPLICE_F_MORE | SPLICE_F_MOVE); -1 == bytes) {
 			exit_errno("cannot write data to target file descriptor");
 		}
 		return false;

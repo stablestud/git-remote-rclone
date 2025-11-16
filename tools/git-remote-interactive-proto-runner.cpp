@@ -2,7 +2,7 @@
 
 #include "testutils.hpp"
 
-int main(int argc, char* argv[])
+int main(const int /* argc */, const char *const argv[])
 {
 	testutils::setup::setup_workdir(std::filesystem::absolute(argv[0]));
 	testutils::git::git_repo repo = testutils::git::init_repo(testutils::WORKDIR / "repo");
