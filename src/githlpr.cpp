@@ -67,38 +67,28 @@ bool githlpr::has_valid_git_dir_env()
 bool githlpr::process_git_cmds(std::istream& input, std::ostream& output)
 {
 	bool unknwn_cmd = false;
-	bool error = true;
+	bool no_cmd = true;
 	std::string cmd;
-	std::stringstream reply_buf{};
-	bool in_block = false;
 	while(not std::getline(input, cmd).eof()) {
 		std::string cmd_prefix = get_nth_str_word(cmd, 1);
 		switch(get_cmd_type(cmd_prefix)) {
 			case git_cmd_t::CAPABILITIES:
-				in_block = true;
-				reply_buf << "push" << std::endl;
+				output << replies::capabilities << std::endl << std::endl;
+				no_cmd = false;
 				break;
 			case git_cmd_t::PUSH:
-				in_block = true;
-				reply_buf << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl;
+				output << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl << std::endl;
+				no_cmd = false;
 				break;
 			case git_cmd_t::PING:
-				in_block = true;
-				reply_buf << replies::ping_reply << std::endl;
+				output << replies::ping_reply << std::endl << std::endl;
+				no_cmd = false;
 				break;
 			case git_cmd_t::ENDL:
-				if (in_block) {
-					reply_buf << std::endl;
-					output << reply_buf.str();
-					reply_buf.clear();
-					reply_buf.str("");
-					error = false;
-					in_block = false;
-				}
 				break;
 			default:
 				unknwn_cmd = true;
 		}
 	}
-	return unknwn_cmd or error;
+	return unknwn_cmd or no_cmd;
 }
