@@ -101,7 +101,6 @@ TEST_SUITE("process_git_cmds()")
 		{
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
 			git_cmd_strm << githlpr::cmds::caps << std::endl;
-			git_cmd_strm << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
 			testutils::skip_to_blank_or_eof(git_reply_strm); // skip over blank line
@@ -133,14 +132,12 @@ TEST_SUITE("process_git_cmds()")
 		SUBCASE("should return true on unknown command")
 		{
 			git_cmd_strm << "foo bar" << std::endl;
-			git_cmd_strm << std::endl;
 			CHECK(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
 		}
 
 		SUBCASE("should return false on valid command")
 		{
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
-			git_cmd_strm << std::endl;
 			CHECK_FALSE(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
 		}
 
@@ -155,7 +152,6 @@ TEST_SUITE("process_git_cmds()")
 		SUBCASE("should reply 'pong' on ping cmd")
 		{
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
-			git_cmd_strm << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
 		}
@@ -163,7 +159,6 @@ TEST_SUITE("process_git_cmds()")
 		SUBCASE("should reply its capabilities on capabilities cmd")
 		{
 			git_cmd_strm << githlpr::cmds::caps << std::endl;
-			git_cmd_strm << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK_EQ(githlpr::replies::capabilities, testutils::getline(git_reply_strm));
 		}
@@ -172,7 +167,6 @@ TEST_SUITE("process_git_cmds()")
 		{
 			git_cmd_strm << "push refs/heads/master:refs/heads/master" << std::endl;
 			git_cmd_strm << "push HEAD:refs/heads/branch" << std::endl;
-			git_cmd_strm << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK_EQ("ok refs/heads/master", testutils::getline(git_reply_strm));
 			testutils::skip_to_blank_or_eof(git_reply_strm);
