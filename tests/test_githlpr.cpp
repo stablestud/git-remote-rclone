@@ -14,8 +14,6 @@
 
 #include "githlpr.hpp"
 
-const int cap_reply_line_count = 1;
-
 static bool is_ping_reply(std::istream& strm)
 {
 	return githlpr::replies::ping_reply == testutils::getline(strm);
@@ -49,7 +47,7 @@ TEST_SUITE("process_git_cmds()")
 
 		SUBCASE("should ignore blank cmd lines and return true when no cmds were given")
 		{
-			for (auto _ : {1, 2, 3}) {
+			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << std::endl;
 			}
 			CHECK(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
@@ -58,7 +56,7 @@ TEST_SUITE("process_git_cmds()")
 
 		SUBCASE("should ignore blank cmd lines, reply to cmd and return false")
 		{
-			for (auto _ : {1, 2, 3}) {
+			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << std::endl;
 			}
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
@@ -88,12 +86,12 @@ TEST_SUITE("process_git_cmds()")
 
 		SUBCASE("should terminate each reply with a blank line")
 		{
-			for (auto _ : {1, 2, 3}) {
+			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << githlpr::cmds::ping << std::endl;
 				git_cmd_strm << githlpr::cmds::ping << std::endl;
 			}
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
-			for (auto _ : {1, 2, 3}) {
+			for (int i{}; i <= 3; i++) {
 				CHECK(is_ping_reply(git_reply_strm));
 				CHECK(testutils::getline(git_reply_strm).empty());
 			}
@@ -112,11 +110,11 @@ TEST_SUITE("process_git_cmds()")
 
 		SUBCASE("should not repeat past cmds in new cmds")
 		{
-			for (auto _ : {1, 2, 3}) {
+			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << githlpr::cmds::ping << std::endl;
 			}
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
-			for (auto _ : {1, 2, 3}) {
+			for (int i{}; i <= 3; i++) {
 				CHECK(is_ping_reply(git_reply_strm));
 				testutils::skip_to_blank_or_eof(git_reply_strm); // skip over blank line
 			}
