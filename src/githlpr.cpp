@@ -16,6 +16,7 @@ namespace
 		CAPABILITIES,
 		PING,
 		PUSH,
+		LIST,
 		UNKNOWN,
 		ENDL
 	};
@@ -46,6 +47,8 @@ namespace
 			return git_cmd_t::CAPABILITIES;
 		} else if (cmd == githlpr::cmds::push) {
 			return git_cmd_t::PUSH;
+		} else if (cmd == githlpr::cmds::list) {
+			return git_cmd_t::LIST;
 		} else if (cmd == githlpr::cmds::ping) {
 			return git_cmd_t::PING;
 		} else if (cmd.empty()) {
@@ -75,6 +78,9 @@ void githlpr::process_git_cmds(std::istream& input, std::ostream& output)
 				break;
 			case git_cmd_t::PUSH:
 				output << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl << std::endl;
+				break;
+			case git_cmd_t::LIST:
+				output << "2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master" << std::endl << std::endl;
 				break;
 			case git_cmd_t::PING:
 				output << replies::ping_reply << std::endl << std::endl;

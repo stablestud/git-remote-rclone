@@ -19,6 +19,11 @@ static bool is_ping_reply(std::istream& strm)
 	return githlpr::replies::ping_reply == testutils::getline(strm);
 }
 
+static bool is_last_reply(std::istream& strm)
+{
+	return testutils::getline(strm).empty() && testutils::is_strm_eof(strm);
+}
+
 TEST_CASE("has_valid_git_dir() should return false if GIT_DIR is unset")
 {
 	CHECK_FALSE(githlpr::has_valid_git_dir_env());
@@ -143,27 +148,29 @@ TEST_SUITE("process_git_cmds()")
 			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "unknown command: foo bar");
 		}
 
-		SUBCASE("should reply 'pong' on ping cmd")
+		SUBCASE("should reply 'pong' on 'ping' cmd")
 		{
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
+			CHECK(is_last_reply(git_reply_strm));
 		}
 
-		SUBCASE("should reply its capabilities on capabilities cmd")
+		SUBCASE("should reply its capabilities on 'capabilities' cmd")
 		{
 			git_cmd_strm << githlpr::cmds::caps << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK_EQ(githlpr::replies::capabilities, testutils::getline(git_reply_strm));
+			CHECK(is_last_reply(git_reply_strm));
 		}
 
-		SUBCASE("should throw on invalid push cmd")
+		SUBCASE("should throw on invalid 'push' cmd")
 		{
 			git_cmd_strm << githlpr::cmds::push << std::endl;
 			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse dst-ref from push argument");
 		}
 
-		SUBCASE("should reply 'ok <dst>' for each push cmd")
+		SUBCASE("should reply 'ok <dst>' for each 'push' cmd")
 		{
 			git_cmd_strm << "push refs/heads/master:refs/heads/master" << std::endl;
 			git_cmd_strm << "push HEAD:refs/heads/branch" << std::endl;
@@ -171,6 +178,15 @@ TEST_SUITE("process_git_cmds()")
 			CHECK_EQ("ok refs/heads/master", testutils::getline(git_reply_strm));
 			testutils::skip_to_blank_or_eof(git_reply_strm);
 			CHECK_EQ("ok refs/heads/branch", testutils::getline(git_reply_strm));
+			CHECK(is_last_reply(git_reply_strm));
+		}
+
+		SUBCASE("should reply dummy refs on 'list for-push' cmd")
+		{
+			git_cmd_strm << "list for-push" << std::endl;
+			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			CHECK_EQ("2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master", testutils::getline(git_reply_strm));
+			CHECK(is_last_reply(git_reply_strm));
 		}
 	}
 }

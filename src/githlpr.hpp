@@ -10,6 +10,7 @@ namespace githlpr
 	{
 		inline constexpr std::string_view caps{"capabilities"};
 		inline constexpr std::string_view push{"push"};
+		inline constexpr std::string_view list{"list"};
 		inline constexpr std::string_view ping{"ping"}; // not a git helper cmd; implemented for testing
 	}
 
