@@ -8,6 +8,7 @@
 
 #include <cstdlib>
 
+#include "debug.hpp"
 #include "githlpr.hpp"
 
 namespace
@@ -72,22 +73,28 @@ void githlpr::process_git_cmds(std::istream& input, std::ostream& output)
 	std::string cmd;
 	while(not std::getline(input, cmd).eof()) {
 		std::string cmd_prefix = get_nth_str_word(cmd, 1);
+		DEBUG_LOG(">> " + cmd);
 		switch(get_cmd_type(cmd_prefix)) {
 			case git_cmd_t::CAPABILITIES:
+				DEBUG_LOG("<< my capabilities");
 				output << replies::capabilities << std::endl << std::endl;
 				break;
 			case git_cmd_t::PUSH:
+				DEBUG_LOG("<< push ok");
 				output << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl << std::endl;
 				break;
 			case git_cmd_t::LIST:
+				DEBUG_LOG("<< refs");
 				output << "2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master" << std::endl << std::endl;
 				break;
 			case git_cmd_t::PING:
+				DEBUG_LOG("<< pong");
 				output << replies::ping_reply << std::endl << std::endl;
 				break;
 			case git_cmd_t::ENDL:
 				break;
 			default:
+				DEBUG_LOG("unknown cmd");
 				throw std::runtime_error("unknown command: " + cmd);
 		}
 	}

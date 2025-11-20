@@ -35,7 +35,7 @@ add_compile_options(
 		-Werror)
 
 if(${DEBUG})
-	add_compile_definitions(${DEBUG})
+	add_compile_definitions(DEBUG)
 	set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 	message(STATUS "Configuring ${BUILD_DIR} as DEBUG build")
 else()
