@@ -39,29 +39,29 @@ TEST_SUITE("process_git_cmds()")
 		REQUIRE(git_cmd_strm.str().empty());
 		REQUIRE(git_reply_strm.str().empty());
 
-		SUBCASE("should reply nothing and return true when no cmds were given")
+		SUBCASE("should reply nothing when no cmds were given")
 		{
-			CHECK(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
+			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 
-		SUBCASE("should ignore blank cmd lines and return true when no cmds were given")
+		SUBCASE("should ignore blank cmd lines and reply nothing")
 		{
 			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << std::endl;
 			}
-			CHECK(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
+			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 
-		SUBCASE("should ignore blank cmd lines, reply to cmd and return false")
+		SUBCASE("should ignore blank cmd lines, reply to cmd")
 		{
 			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << std::endl;
 			}
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
 			git_cmd_strm << std::endl;
-			CHECK_FALSE(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
+			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
 		}
 
@@ -129,24 +129,18 @@ TEST_SUITE("process_git_cmds()")
 		REQUIRE(git_cmd_strm.str().empty());
 		REQUIRE(git_reply_strm.str().empty());
 
-		SUBCASE("should return true on unknown command")
+		SUBCASE("should throw on unknown command")
 		{
 			git_cmd_strm << "foo bar" << std::endl;
-			CHECK(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "unknown command: foo bar");
 		}
 
-		SUBCASE("should return false on valid command")
-		{
-			git_cmd_strm << githlpr::cmds::ping << std::endl;
-			CHECK_FALSE(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
-		}
-
-		SUBCASE("should return true on unknown command even when other cmds were valid")
+		SUBCASE("should throw on unknown command even when other cmds were valid")
 		{
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
 			git_cmd_strm << "foo bar" << std::endl;
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
-			CHECK(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm));
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "unknown command: foo bar");
 		}
 
 		SUBCASE("should reply 'pong' on ping cmd")
@@ -161,6 +155,12 @@ TEST_SUITE("process_git_cmds()")
 			git_cmd_strm << githlpr::cmds::caps << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK_EQ(githlpr::replies::capabilities, testutils::getline(git_reply_strm));
+		}
+
+		SUBCASE("should throw on invalid push cmd")
+		{
+			git_cmd_strm << githlpr::cmds::push << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse dst-ref from push argument");
 		}
 
 		SUBCASE("should reply 'ok <dst>' for each push cmd")

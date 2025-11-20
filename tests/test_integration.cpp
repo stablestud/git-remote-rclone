@@ -17,5 +17,5 @@ TEST_CASE("walking_skeleton")
 	git::append_test_data(init_repo);
 	git::add_all(init_repo);
 	git::commit(init_repo);
-	git::push(init_repo);
+	CHECK(git::push(init_repo));
 }

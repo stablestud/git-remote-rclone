@@ -2,3 +2,4 @@ build*
 *.swp
 CMakeUserPresets.json
 *.orig
+*~

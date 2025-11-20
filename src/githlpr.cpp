@@ -34,7 +34,7 @@ namespace
 	{
 		size_t colon_pos{push_args.find(':')};
 		if (std::string_view::npos == colon_pos) {
-			throw std::runtime_error("could not parse dst from push arguments");
+			throw std::runtime_error("could not parse dst-ref from push argument");
 		}
 		colon_pos += 1;
 		return get_nth_str_word(push_args.substr(colon_pos, push_args.length() - colon_pos), 1);
@@ -64,31 +64,25 @@ bool githlpr::has_valid_git_dir_env()
 	return false;
 }
 
-bool githlpr::process_git_cmds(std::istream& input, std::ostream& output)
+void githlpr::process_git_cmds(std::istream& input, std::ostream& output)
 {
-	bool unknwn_cmd = false;
-	bool no_cmd = true;
 	std::string cmd;
 	while(not std::getline(input, cmd).eof()) {
 		std::string cmd_prefix = get_nth_str_word(cmd, 1);
 		switch(get_cmd_type(cmd_prefix)) {
 			case git_cmd_t::CAPABILITIES:
 				output << replies::capabilities << std::endl << std::endl;
-				no_cmd = false;
 				break;
 			case git_cmd_t::PUSH:
 				output << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl << std::endl;
-				no_cmd = false;
 				break;
 			case git_cmd_t::PING:
 				output << replies::ping_reply << std::endl << std::endl;
-				no_cmd = false;
 				break;
 			case git_cmd_t::ENDL:
 				break;
 			default:
-				unknwn_cmd = true;
+				throw std::runtime_error("unknown command: " + cmd);
 		}
 	}
-	return unknwn_cmd or no_cmd;
 }

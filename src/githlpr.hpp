@@ -20,7 +20,7 @@ namespace githlpr
 	}
 
 	extern bool has_valid_git_dir_env();
-	extern bool process_git_cmds(std::istream&, std::ostream&);
+	extern void process_git_cmds(std::istream&, std::ostream&);
 }
 
 #endif /* GITHLPR_HPP */

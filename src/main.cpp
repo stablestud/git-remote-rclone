@@ -10,5 +10,5 @@ int main()
 		std::cerr << "GIT_DIR is not set" << std::endl;
 		std::exit(EXIT_FAILURE);
 	}
-	return githlpr::process_git_cmds(std::cin, std::cout);
+	githlpr::process_git_cmds(std::cin, std::cout);
 }
