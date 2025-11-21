@@ -50,7 +50,7 @@ TEST_SUITE("process_git_cmds()")
 			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 
-		SUBCASE("should ignore blank cmd lines and reply nothing")
+		SUBCASE("should terminate and reply nothing when blank line is given only")
 		{
 			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << std::endl;
@@ -59,7 +59,7 @@ TEST_SUITE("process_git_cmds()")
 			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 
-		SUBCASE("should ignore blank cmd lines, reply to cmd")
+		SUBCASE("should terminate on blank cmd line; skipping further execution")
 		{
 			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << std::endl;
@@ -67,7 +67,7 @@ TEST_SUITE("process_git_cmds()")
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
 			git_cmd_strm << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
-			CHECK(is_ping_reply(git_reply_strm));
+			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 
 		SUBCASE("should reply to cmds without terminating blank lines")

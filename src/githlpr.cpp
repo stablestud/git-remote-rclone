@@ -92,7 +92,8 @@ void githlpr::process_git_cmds(std::istream& input, std::ostream& output)
 				output << replies::ping_reply << std::endl << std::endl;
 				break;
 			case git_cmd_t::ENDL:
-				break;
+				DEBUG_LOG("end-of-cmd, terminating");
+				return;
 			default:
 				DEBUG_LOG("unknown cmd");
 				throw std::runtime_error("unknown command: " + cmd);
