@@ -1,6 +1,7 @@
 #ifndef GITHLPR_HPP
 #define GITHLPR_HPP
 
+#include <array>
 #include <iostream>
 #include <string>
 
@@ -16,7 +17,7 @@ namespace githlpr
 
 	namespace replies
 	{
-		inline constexpr std::string_view capabilities{"push"};
+		inline constexpr std::array<std::string_view, 1> caps{{"push"}};
 		inline constexpr std::string_view ping_reply{"pong"};
 	}
 

@@ -2,6 +2,7 @@
 #include <future>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -14,14 +15,29 @@
 
 #include "githlpr.hpp"
 
-static bool is_ping_reply(std::istream& strm)
+namespace
 {
-	return githlpr::replies::ping_reply == testutils::getline(strm);
-}
+	bool is_ping_reply(std::istream& strm)
+	{
+		return githlpr::replies::ping_reply == testutils::getline(strm);
+	}
 
-static bool is_last_reply(std::istream& strm)
-{
-	return testutils::getline(strm).empty() && testutils::is_strm_eof(strm);
+	bool is_caps_reply(std::istream& strm)
+	{
+		std::string reply;
+		for (const std::string_view& cap : githlpr::replies::caps) {
+			reply = testutils::getline(strm);
+			if (cap.compare(reply)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool is_last_reply(std::istream& strm)
+	{
+		return testutils::getline(strm).empty() && testutils::is_strm_eof(strm);
+	}
 }
 
 TEST_CASE("has_valid_git_dir() should return false if GIT_DIR is unset")
@@ -109,7 +125,7 @@ TEST_SUITE("process_git_cmds()")
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
 			testutils::skip_to_blank_or_eof(git_reply_strm); // skip over blank line
-			CHECK_EQ(githlpr::replies::capabilities, testutils::getline(git_reply_strm));
+			CHECK(is_caps_reply(git_reply_strm));
 		}
 
 		SUBCASE("should not repeat past cmds in new cmds")
@@ -160,7 +176,7 @@ TEST_SUITE("process_git_cmds()")
 		{
 			git_cmd_strm << githlpr::cmds::caps << std::endl;
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
-			CHECK_EQ(githlpr::replies::capabilities, testutils::getline(git_reply_strm));
+			CHECK(is_caps_reply(git_reply_strm));
 			CHECK(is_last_reply(git_reply_strm));
 		}
 

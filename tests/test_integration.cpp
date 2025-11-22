@@ -12,10 +12,15 @@ SETUP_TEST("test_integration");
 TEST_CASE("walking_skeleton")
 {
 	const std::filesystem::path test_case_dir = SETUP_TEST_CASE("walking_skeleton");
+
+	// Test init repo push to remote
 	git::git_repo init_repo = git::init_repo(test_case_dir / "init_repo");
 	git::add_remote(init_repo);
 	git::append_test_data(init_repo);
 	git::add_all(init_repo);
 	git::commit(init_repo);
 	CHECK(git::push(init_repo));
+
+	// Test clone repo from remote
+	git::git_repo clone_repo = git::clone_repo(test_case_dir / "clone_repo");
 }

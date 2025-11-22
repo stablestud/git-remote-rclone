@@ -213,6 +213,8 @@ namespace testutils
 
 namespace testutils::rclone
 {
+	const std::string remote{"rclone://remote:"};
+
 	bool rclone_cmd(const std::filesystem::path& rclone_cfg, const std::string& cmd)
 	{
 		return execute("RCLONE_CONFIG=" + rclone_cfg + " rclone " + cmd);
@@ -260,10 +262,10 @@ namespace testutils::setup
 	{
 		const std::filesystem::path rclone_cfg = test_case_dir / "rclone.conf";
 		if (not rclone::rclone_cmd(rclone_cfg, "config create --non-interactive --obscure remote crypt password=git-remote-rclone \"remote=" + test_case_dir / "remote" + "\"")) {
-			throw std::runtime_error("cannot setup rclone config for crypt remote");
+			throw std::runtime_error("cannot setup rclone config for remote");
 		}
 		if (not std::filesystem::is_regular_file(rclone_cfg)) {
-			throw std::runtime_error("cannot create rclone config (: " + rclone_cfg);
+			throw std::runtime_error("cannot create rclone config: " + rclone_cfg);
 		}
 	}
 
@@ -301,6 +303,7 @@ namespace testutils::git
 		const std::filesystem::path repo;
 
 		friend git_repo init_repo(const std::filesystem::path&);
+		friend git_repo clone_repo(const std::filesystem::path&, const std::string&);
 	protected:
 		explicit git_repo(const std::filesystem::path repo) : ncommits(1), repo(repo) {}
 	public:
@@ -326,9 +329,14 @@ namespace testutils::git
 		return str.append(repo.get_repo_path());
 	}
 
-	bool git_cmd(const std::string& cmd, const git_repo& repo)
+	bool git_cmd(const std::string_view& cmd, const std::filesystem::path& path)
 	{
-		return execute("git -C \"" + repo + "\" " + cmd);
+		return execute("git -C \"" + path.string() + "\" " + cmd);
+	}
+
+	bool git_cmd(const std::string_view& cmd, const git_repo& repo)
+	{
+		return git_cmd(cmd, repo.get_repo_path());
 	}
 
 	bool commit(git_repo& repo)
@@ -354,7 +362,7 @@ namespace testutils::git
 		testfile << "append@" << std::to_string(repo.get_ncommits()) << ":" << get_rnd_hex_str(16) << std::endl;
 	}
 
-	bool add_remote(const git_repo& repo, const std::string remote_url = "rclone://remote:subdir")
+	bool add_remote(const git_repo& repo, const std::string remote_url = rclone::remote)
 	{
 		// remote_url: "<proto>://": <proto> effectively sets what helper git will execute -> git-remote-<proto>
 		return git_cmd("remote add origin " + remote_url, repo);
@@ -368,6 +376,15 @@ namespace testutils::git
 		const git_repo g_repo{repo};
 		if (not git_cmd("init --initial-branch=master", g_repo)) {
 			throw std::runtime_error("cannot init git repo: " + repo);
+		}
+		return g_repo;
+	}
+
+	git_repo clone_repo(const std::filesystem::path& repo, const std::string& dir = "clone_repo")
+	{
+		const git_repo g_repo{repo};
+		if (not git_cmd("clone " + rclone::remote + " " + dir, repo.parent_path())) {
+			throw std::runtime_error("cannot clone git repo: " + repo);
 		}
 		return g_repo;
 	}
