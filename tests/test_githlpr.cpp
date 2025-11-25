@@ -17,6 +17,9 @@
 
 namespace
 {
+	const std::string_view test_sha1 = "2a569a9e9e5a0d8e4ce829bbdd84904633024f86";
+	const std::string_view test_ref = "refs/heads/master";
+
 	bool is_ping_reply(std::istream& strm)
 	{
 		return githlpr::replies::ping_reply == testutils::getline(strm);
@@ -56,7 +59,6 @@ TEST_SUITE("process_git_cmds()")
 	TEST_CASE("line protocol tests") {
 		std::stringstream git_cmd_strm{};
 		std::stringstream git_reply_strm{};
-
 		REQUIRE(git_cmd_strm.str().empty());
 		REQUIRE(git_reply_strm.str().empty());
 
@@ -171,6 +173,15 @@ TEST_SUITE("process_git_cmds()")
 			CHECK(is_ping_reply(git_reply_strm));
 			CHECK(is_last_reply(git_reply_strm));
 		}
+	}
+
+	TEST_CASE("capabilities cmd")
+	{
+		std::stringstream git_cmd_strm{};
+		std::stringstream git_reply_strm{};
+
+		REQUIRE(git_cmd_strm.str().empty());
+		REQUIRE(git_reply_strm.str().empty());
 
 		SUBCASE("should reply its capabilities on 'capabilities' cmd")
 		{
@@ -179,6 +190,15 @@ TEST_SUITE("process_git_cmds()")
 			CHECK(is_caps_reply(git_reply_strm));
 			CHECK(is_last_reply(git_reply_strm));
 		}
+	}
+
+	TEST_CASE("push cmd")
+	{
+		std::stringstream git_cmd_strm{};
+		std::stringstream git_reply_strm{};
+
+		REQUIRE(git_cmd_strm.str().empty());
+		REQUIRE(git_reply_strm.str().empty());
 
 		SUBCASE("should throw on invalid 'push' cmd")
 		{
@@ -196,6 +216,15 @@ TEST_SUITE("process_git_cmds()")
 			CHECK_EQ("ok refs/heads/branch", testutils::getline(git_reply_strm));
 			CHECK(is_last_reply(git_reply_strm));
 		}
+	}
+
+	TEST_CASE("list cmd")
+	{
+		std::stringstream git_cmd_strm{};
+		std::stringstream git_reply_strm{};
+
+		REQUIRE(git_cmd_strm.str().empty());
+		REQUIRE(git_reply_strm.str().empty());
 
 		SUBCASE("should reply dummy refs on 'list for-push' cmd")
 		{
@@ -203,6 +232,87 @@ TEST_SUITE("process_git_cmds()")
 			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
 			CHECK_EQ("2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master", testutils::getline(git_reply_strm));
 			CHECK(is_last_reply(git_reply_strm));
+		}
+	}
+
+	TEST_CASE("fetch cmd")
+	{
+		std::stringstream git_cmd_strm{};
+		std::stringstream git_reply_strm{};
+
+		REQUIRE(git_cmd_strm.str().empty());
+		REQUIRE(git_reply_strm.str().empty());
+
+		SUBCASE("should wait until single fetch cmd is terminated by blank line")
+		{
+			testutils::safe_sstream cmd{}, reply{};
+			// TODO
+		}
+
+		SUBCASE("should wait until fetch cmd block is terminated by blank line")
+		{
+			testutils::safe_sstream cmd{}, reply{};
+			// TODO
+		}
+
+		SUBCASE("should throw on parameterless fetch cmd")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+		}
+
+		SUBCASE("should throw on invalid fetch cmd (missing ref)")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << test_sha1 << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+		}
+
+		SUBCASE("should throw on invalid fetch cmd (missing sha1 hash)")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << " " << test_ref << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+		}
+
+		SUBCASE("should throw on invalid fetch cmd (too short sha1 hash)")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1.substr(2) << " " << test_ref << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+		}
+
+		SUBCASE("should throw on invalid fetch cmd (too long sha1 hash)")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1 << "729 " << test_ref << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+		}
+
+		SUBCASE("should throw on invalid fetch cmd (invalid sha1 hash)")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << " k/2js3yzklohs$sd" << test_sha1.substr(16) << " " << test_ref << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+		}
+
+		SUBCASE("should throw on invalid fetch cmd (parameters in wrong order)")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << " " << test_ref << " " << test_sha1 << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+		}
+
+		SUBCASE("should reply blank line on single fetch cmd")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1 << " " << test_ref << std::endl;
+			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			CHECK(testutils::getline(git_reply_strm).empty());
+			CHECK(testutils::is_strm_eof(git_reply_strm));
+		}
+
+		SUBCASE("should reply single blank line at the end of fetch cmd block")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1 << " " << test_ref << std::endl;
+			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1 << " " << test_ref << std::endl;
+			git_cmd_strm << std::endl;
+			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			CHECK(testutils::getline(git_reply_strm).empty());
+			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 	}
 }
