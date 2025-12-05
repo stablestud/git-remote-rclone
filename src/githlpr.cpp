@@ -19,7 +19,7 @@ namespace
 		PUSH,
 		LIST,
 		UNKNOWN,
-		ENDL
+		BLANK_LINE
 	};
 
 	std::string get_nth_str_word(const std::string_view& str, const size_t n)
@@ -53,7 +53,7 @@ namespace
 		} else if (cmd == githlpr::cmds::ping) {
 			return git_cmd_t::PING;
 		} else if (cmd.empty()) {
-			return git_cmd_t::ENDL;
+			return git_cmd_t::BLANK_LINE;
 		} else {
 			return git_cmd_t::UNKNOWN;
 		}
@@ -80,31 +80,29 @@ void githlpr::process_git_cmds(std::istream& input, std::ostream& output)
 	std::string cmd;
 	while(not std::getline(input, cmd).eof()) {
 		std::string cmd_prefix = get_nth_str_word(cmd, 1);
+		std::stringstream reply{};
 		DEBUG_LOG(">> " + cmd);
 		switch(get_cmd_type(cmd_prefix)) {
 			case git_cmd_t::CAPABILITIES:
-				DEBUG_LOG("<< my capabilities");
-				write_caps(output);
+				write_caps(reply);
 				break;
 			case git_cmd_t::PUSH:
-				DEBUG_LOG("<< push ok");
-				output << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl;
+				reply << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl;
 				break;
 			case git_cmd_t::LIST:
-				DEBUG_LOG("<< refs");
-				output << "2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master" << std::endl;
+				reply << "2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master" << std::endl;
 				break;
 			case git_cmd_t::PING:
-				DEBUG_LOG("<< pong");
-				output << replies::ping_reply << std::endl;
+				reply << replies::ping_reply << std::endl;
 				break;
-			case git_cmd_t::ENDL:
-				DEBUG_LOG("end-of-cmd, terminating");
-				return;
+			case git_cmd_t::BLANK_LINE:
+				break;
 			default:
 				DEBUG_LOG("unknown cmd");
 				throw std::runtime_error("unknown command: " + cmd);
 		}
-		output << std::endl;
+		DEBUG_LOG("<< " + reply.str());
+		output << reply.str() << std::endl;
 	}
+	output << std::endl;
 }
