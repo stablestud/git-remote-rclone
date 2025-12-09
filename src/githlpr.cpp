@@ -102,7 +102,8 @@ void githlpr::process_git_cmds(std::istream& input, std::ostream& output)
 				throw std::runtime_error("unknown command: " + cmd);
 		}
 		DEBUG_LOG("<< " + reply.str());
-		output << reply.str() << std::endl;
+		if (std::stringstream::traits_type::eof() != reply.peek()) {
+			output << reply.str() << std::endl;
+		}
 	}
-	output << std::endl;
 }
