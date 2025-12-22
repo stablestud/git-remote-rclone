@@ -14,20 +14,20 @@
 
 namespace debug
 {
-	void wait_loop() // Infinite while loop; used if raising SIGSTOP does not work (terminated by parent)
+	inline void wait_loop() // Infinite while loop; used if raising SIGSTOP does not work (terminated by parent)
 	{		 // Use debugger to exit while loop, by setting var exit to true
 		std::cerr << __PRETTY_FUNCTION__ << ": attach debugger to pid: " << getpid() << std::endl;
 		volatile bool exit = false;
 		while (not exit);
 	}
 
-	void stop()  // Raise SIGSTOP to self; halts execution to be able to attach debugger at current execution
+	inline void stop()  // Raise SIGSTOP to self; halts execution to be able to attach debugger at current execution
 	{
 		std::cerr << __PRETTY_FUNCTION__ << ": attach debugger to pid: " << getpid() << std::endl;
 		std::raise(SIGSTOP);
 	}
 
-	void log(const std::string_view& file, const std::string_view& msg)
+	inline void log(const std::string_view& file, const std::string_view& msg)
 	{
 		std::cerr << file << ": " << msg << std::endl;
 	}
