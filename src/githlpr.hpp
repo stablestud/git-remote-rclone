@@ -4,6 +4,9 @@
 #include <array>
 #include <iostream>
 #include <string>
+#include <string_view>
+#include <sstream>
+#include <stdexcept>
 
 #include "debug.hpp"
 
@@ -31,6 +34,7 @@ namespace githlpr
 		PING,
 		PUSH,
 		LIST,
+		FETCH,
 		UNKNOWN,
 		BLANK_LINE
 	};
@@ -40,40 +44,43 @@ namespace githlpr
 	git_cmd_t get_cmd_type(const std::string_view&);
 	void write_caps(std::ostream&);
 
-	struct git_cmd_parser {
+	struct git_cmd_handler {
+		static void fetch(void);
 	};
 
-	template<typename GitCmdParsePolicy = git_cmd_parser>
-	void process_git_cmds(std::istream& input, std::ostream& output)
+	template<typename GitCmdHandler = git_cmd_handler>
+	void process_git_line_cmds(std::istream& input, std::ostream& output)
 	{
 		std::string cmd;
+		// Do all Git cmd line processing here as I don't want to do unknown cmd, etc handling in a sub function or GitCmdHandler
 		while(not std::getline(input, cmd).eof()) {
 			std::string cmd_prefix = get_nth_str_word(cmd, 1);
 			std::stringstream reply{};
 			DEBUG_LOG(">> " + cmd);
 			switch(get_cmd_type(cmd_prefix)) {
-				case git_cmd_t::CAPABILITIES:
-					write_caps(reply);
-					break;
-				case git_cmd_t::PUSH:
-					reply << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl;
-					break;
-				case git_cmd_t::LIST:
-					reply << "2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master" << std::endl;
-					break;
-				case git_cmd_t::PING:
-					reply << replies::ping_reply << std::endl;
-					break;
-				case git_cmd_t::BLANK_LINE:
-					break;
-				default:
-					DEBUG_LOG("unknown cmd");
-					throw std::runtime_error("unknown command: " + cmd);
+			case git_cmd_t::CAPABILITIES:
+				write_caps(reply);
+				break;
+			case git_cmd_t::PUSH:
+				reply << "ok " << get_push_dst(get_nth_str_word(cmd, 2)) << std::endl;
+				break;
+			case git_cmd_t::LIST:
+				reply << "2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master" << std::endl;
+				break;
+			case git_cmd_t::FETCH:
+				GitCmdHandler::fetch();
+				break;
+			case git_cmd_t::PING:
+				reply << replies::ping_reply << std::endl;
+				break;
+			case git_cmd_t::BLANK_LINE:
+				continue;
+			default:
+				DEBUG_LOG("unknown cmd");
+				throw std::runtime_error("unknown command: " + cmd);
 			}
 			DEBUG_LOG("<< " + reply.str());
-			if (std::stringstream::traits_type::eof() != reply.peek()) {
-				output << reply.str() << std::endl;
-			}
+			output << reply.str() << std::endl;
 		}
 	}
 }

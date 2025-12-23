@@ -4,6 +4,7 @@ CMakeUserPresets.json
 # vim
 *.swp
 *~
+tags
 
 # git mergetool
 *.orig

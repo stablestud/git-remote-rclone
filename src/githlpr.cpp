@@ -50,11 +50,12 @@ namespace githlpr
 			return git_cmd_t::LIST;
 		} else if (cmd == githlpr::cmds::ping) {
 			return git_cmd_t::PING;
+		} else if (cmd == githlpr::cmds::fetch) {
+			return git_cmd_t::FETCH;
 		} else if (cmd.empty()) {
 			return git_cmd_t::BLANK_LINE;
-		} else {
-			return git_cmd_t::UNKNOWN;
 		}
+		return git_cmd_t::UNKNOWN;
 	}
 
 	void write_caps(std::ostream& reply)
@@ -62,5 +63,10 @@ namespace githlpr
 		for (const std::string_view& cap : githlpr::replies::caps) {
 			reply << cap << std::endl;
 		}
+	}
+
+	void git_cmd_handler::fetch(void)
+	{
+		throw std::runtime_error("could not parse fetch parameters");
 	}
 }

@@ -54,7 +54,7 @@ TEST_CASE("has_valid_git_dir() should return false if GIT_DIR is unset")
 	REQUIRE_FALSE(githlpr::has_valid_git_dir_env());
 }
 
-TEST_SUITE("process_git_cmds()")
+TEST_SUITE("process_git_line_cmds()")
 {
 	TEST_CASE("line protocol tests") {
 		std::stringstream git_cmd_strm{};
@@ -64,7 +64,7 @@ TEST_SUITE("process_git_cmds()")
 
 		SUBCASE("should reply nothing when no cmds were given")
 		{
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 
@@ -73,7 +73,7 @@ TEST_SUITE("process_git_cmds()")
 			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << std::endl;
 			}
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 
@@ -84,7 +84,7 @@ TEST_SUITE("process_git_cmds()")
 			}
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
 			git_cmd_strm << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
 		}
 
@@ -94,14 +94,14 @@ TEST_SUITE("process_git_cmds()")
 			// cmds are not terminated by a blank line and should be
 			// processed/replied to immediately when received
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
 		}
 
 		SUBCASE("should terminate single reply with a blank line")
 		{
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			// Discard current reply block until its end
 			CHECK(testutils::skip_to_blank_or_eof(git_reply_strm).empty());
 			CHECK(testutils::is_strm_eof(git_reply_strm));
@@ -113,7 +113,7 @@ TEST_SUITE("process_git_cmds()")
 				git_cmd_strm << githlpr::cmds::ping << std::endl;
 				git_cmd_strm << githlpr::cmds::ping << std::endl;
 			}
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			for (int i{}; i <= 3; i++) {
 				CHECK(is_ping_reply(git_reply_strm));
 				CHECK(testutils::getline(git_reply_strm).empty());
@@ -124,7 +124,7 @@ TEST_SUITE("process_git_cmds()")
 		{
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
 			git_cmd_strm << githlpr::cmds::caps << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
 			testutils::skip_to_blank_or_eof(git_reply_strm); // skip over blank line
 			CHECK(is_caps_reply(git_reply_strm));
@@ -135,7 +135,7 @@ TEST_SUITE("process_git_cmds()")
 			for (int i{}; i <= 3; i++) {
 				git_cmd_strm << githlpr::cmds::ping << std::endl;
 			}
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			for (int i{}; i <= 3; i++) {
 				CHECK(is_ping_reply(git_reply_strm));
 				testutils::skip_to_blank_or_eof(git_reply_strm); // skip over blank line
@@ -155,7 +155,7 @@ TEST_SUITE("process_git_cmds()")
 		SUBCASE("should throw on unknown command")
 		{
 			git_cmd_strm << "foo bar" << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "unknown command: foo bar");
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "unknown command: foo bar");
 		}
 
 		SUBCASE("should throw on unknown command even when other cmds were valid")
@@ -163,13 +163,13 @@ TEST_SUITE("process_git_cmds()")
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
 			git_cmd_strm << "foo bar" << std::endl;
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "unknown command: foo bar");
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "unknown command: foo bar");
 		}
 
 		SUBCASE("should reply 'pong' on 'ping' cmd")
 		{
 			git_cmd_strm << githlpr::cmds::ping << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_ping_reply(git_reply_strm));
 			CHECK(is_last_reply(git_reply_strm));
 		}
@@ -186,7 +186,7 @@ TEST_SUITE("process_git_cmds()")
 		SUBCASE("should reply its capabilities on 'capabilities' cmd")
 		{
 			git_cmd_strm << githlpr::cmds::caps << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(is_caps_reply(git_reply_strm));
 			CHECK(is_last_reply(git_reply_strm));
 		}
@@ -203,14 +203,14 @@ TEST_SUITE("process_git_cmds()")
 		SUBCASE("should throw on invalid 'push' cmd")
 		{
 			git_cmd_strm << githlpr::cmds::push << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse dst-ref from push argument");
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "could not parse dst-ref from push argument");
 		}
 
 		SUBCASE("should reply 'ok <dst>' for each 'push' cmd")
 		{
 			git_cmd_strm << "push refs/heads/master:refs/heads/master" << std::endl;
 			git_cmd_strm << "push HEAD:refs/heads/branch" << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK_EQ("ok refs/heads/master", testutils::getline(git_reply_strm));
 			testutils::skip_to_blank_or_eof(git_reply_strm);
 			CHECK_EQ("ok refs/heads/branch", testutils::getline(git_reply_strm));
@@ -229,13 +229,13 @@ TEST_SUITE("process_git_cmds()")
 		SUBCASE("should reply dummy refs on 'list for-push' cmd")
 		{
 			git_cmd_strm << "list for-push" << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK_EQ("2a569a9e9e5a0d8e4ce829bbdd84904633024f86 refs/heads/master", testutils::getline(git_reply_strm));
 			CHECK(is_last_reply(git_reply_strm));
 		}
 	}
 
-	TEST_CASE("fetch cmd" * doctest::skip())
+	TEST_CASE("fetch cmd")
 	{
 		std::stringstream git_cmd_strm{};
 		std::stringstream git_reply_strm{};
@@ -258,59 +258,72 @@ TEST_SUITE("process_git_cmds()")
 		SUBCASE("should throw on parameterless fetch cmd")
 		{
 			git_cmd_strm << githlpr::cmds::fetch << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+		}
+
+		SUBCASE("should throw on unterminated fetch cmd")
+		{
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_sha1 << ' ' << test_ref << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "fetch command was not terminated");
 		}
 
 		SUBCASE("should throw on invalid fetch cmd (missing ref)")
 		{
-			git_cmd_strm << githlpr::cmds::fetch << test_sha1 << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_sha1 << std::endl;
+			git_cmd_strm << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
 		}
 
 		SUBCASE("should throw on invalid fetch cmd (missing sha1 hash)")
 		{
-			git_cmd_strm << githlpr::cmds::fetch << " " << test_ref << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_ref << std::endl;
+			git_cmd_strm << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
 		}
 
 		SUBCASE("should throw on invalid fetch cmd (too short sha1 hash)")
 		{
-			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1.substr(2) << " " << test_ref << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_sha1.substr(2) << ' ' << test_ref << std::endl;
+			git_cmd_strm << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
 		}
 
 		SUBCASE("should throw on invalid fetch cmd (too long sha1 hash)")
 		{
-			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1 << "729 " << test_ref << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_sha1 << "729 " << test_ref << std::endl;
+			git_cmd_strm << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
 		}
 
 		SUBCASE("should throw on invalid fetch cmd (invalid sha1 hash)")
 		{
-			git_cmd_strm << githlpr::cmds::fetch << " k/2js3yzklohs$sd" << test_sha1.substr(16) << " " << test_ref << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+			git_cmd_strm << githlpr::cmds::fetch << " k/2js3yzklohs$sd" << test_sha1.substr(16) << ' ' << test_ref << std::endl;
+			git_cmd_strm << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
 		}
 
 		SUBCASE("should throw on invalid fetch cmd (parameters in wrong order)")
 		{
-			git_cmd_strm << githlpr::cmds::fetch << " " << test_ref << " " << test_sha1 << std::endl;
-			CHECK_THROWS_WITH(githlpr::process_git_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_ref << ' ' << test_sha1 << std::endl;
+			git_cmd_strm << std::endl;
+			CHECK_THROWS_WITH(githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm), "could not parse fetch parameters");
 		}
 
 		SUBCASE("should reply blank line on single fetch cmd")
 		{
-			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1 << " " << test_ref << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_sha1 << ' ' << test_ref << std::endl;
+			git_cmd_strm << std::endl;
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(testutils::getline(git_reply_strm).empty());
 			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
 
 		SUBCASE("should reply single blank line at the end of fetch cmd block")
 		{
-			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1 << " " << test_ref << std::endl;
-			git_cmd_strm << githlpr::cmds::fetch << " " << test_sha1 << " " << test_ref << std::endl;
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_sha1 << ' ' << test_ref << std::endl;
+			git_cmd_strm << githlpr::cmds::fetch << ' ' << test_sha1 << ' ' << test_ref << std::endl;
 			git_cmd_strm << std::endl;
-			githlpr::process_git_cmds(git_cmd_strm, git_reply_strm);
+			githlpr::process_git_line_cmds(git_cmd_strm, git_reply_strm);
 			CHECK(testutils::getline(git_reply_strm).empty());
 			CHECK(testutils::is_strm_eof(git_reply_strm));
 		}
