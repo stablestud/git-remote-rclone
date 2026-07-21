@@ -1,6 +1,7 @@
 #ifndef TESTUTILS_HPP
 #define TESTUTILS_HPP
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -26,10 +27,93 @@ std::string operator+(std::string str, const std::filesystem::path& path)
 
 namespace testutils
 {
+	std::string getline(std::istream& strm)
+	{
+		std::string output{};
+		std::getline(strm, output);
+		return output;
+	}
+
+	bool is_strm_eof(std::istream& strm)
+	{
+		return strm.peek() == std::istream::traits_type::eof();
+	}
+
+	bool is_empty_line(std::istream& strm)
+	{
+		return getline(strm).empty();
+	}
+
+	bool is_last_reply(std::istream& strm)
+	{
+		return is_empty_line(strm) && is_strm_eof(strm);
+	}
+
+	bool is_reply_equal_to(std::istream& strm, const std::string_view& str)
+	{
+		return getline(strm) == str;
+	}
+
+	std::vector<std::string> get_current_strm_block(std::istream& strm)
+	{
+		std::vector<std::string> arr{};
+		std::string line;
+		while(not (is_strm_eof(strm) or (line = getline(strm)).empty())) {
+			arr.push_back(line);
+		}
+		return arr;
+	}
+
+	std::string skip_to_blank_or_eof(std::istream& strm)
+	{
+		std::string last;
+		while(not (is_strm_eof(strm) or (last = getline(strm)).empty()));
+		return last;
+	}
+
+	bool execute(const std::string& cmd)
+	{
+		const int stat = std::system(cmd.c_str());
+		if (WIFEXITED(stat) and WEXITSTATUS(stat) == 0) {
+			return true;
+		}
+		return false;
+	}
+
+	int get_count_empty_lines(std::istream& strm)
+	{
+		int empty_lines = 0;
+		while (not is_strm_eof(strm)) {
+			if (getline(strm).empty()) {
+				empty_lines += 1;
+			}
+		}
+		return empty_lines;
+	}
+}
+
+namespace testutils::mt
+{
 	using namespace std::chrono_literals;
 
+	/* Wait a given time to allow supplier thread to process and return data into strm */
+	bool is_strm_eof_delayed(std::istream& strm, std::chrono::milliseconds ms = 20ms)
+	{
+		std::this_thread::sleep_for(ms);
+		std::this_thread::yield(); // make really sure the other thread could run
+		return is_strm_eof(strm);
+	}
+
+	/* Wait a given time to allow supplier thread to process and return data into strm */
+	std::string getline_delayed(std::istream& strm, std::chrono::milliseconds ms = 20ms)
+	{
+		std::this_thread::sleep_for(ms);
+		std::this_thread::yield(); // make really sure the other thread could run
+		return getline(strm);
+	}
+
 	class safe_stringbuf : public std::stringbuf {
-		mutable std::mutex mutex{};
+		mutable std::recursive_mutex mutex{};
 		using std::stringbuf::stringbuf; // inherit constructors
 	protected:
 		void imbue(const std::locale& loc) override
@@ -136,79 +220,6 @@ namespace testutils
 			return buf.str();
 		}
 	};
-
-	std::filesystem::path WORKDIR;
-
-	bool is_strm_eof(std::istream& strm)
-	{
-		return strm.peek() == std::istream::traits_type::eof();
-	}
-
-	/* Wait a given time to allow supplier thread to process and return data into strm */
-	bool is_strm_eof_delayed(std::istream& strm, std::chrono::milliseconds ms = 20ms)
-	{
-		std::this_thread::sleep_for(ms);
-		std::this_thread::yield(); // make really sure the other thread could run
-		return is_strm_eof(strm);
-	}
-
-	std::string getline(std::istream& strm)
-	{
-		std::string output{};
-		std::getline(strm, output);
-		return output;
-	}
-
-	std::vector<std::string> get_current_strm_block(std::istream& strm)
-	{
-		std::vector<std::string> arr{};
-		std::string line;
-		while(not (is_strm_eof(strm) or (line = getline(strm)).empty())) {
-			arr.push_back(line);
-		}
-		return arr;
-	}
-
-	std::string skip_to_blank_or_eof(std::istream& strm)
-	{
-		std::string last;
-		while(not (is_strm_eof(strm) or (last = getline(strm)).empty()));
-		return last;
-	}
-
-	bool execute(const std::string& cmd)
-	{
-		const int stat = std::system(cmd.c_str());
-		if (WIFEXITED(stat) and WEXITSTATUS(stat) == 0) {
-			return true;
-		}
-		return false;
-	}
-
-	int get_count_empty_lines(std::istream& strm)
-	{
-		int empty_lines = 0;
-		while (not is_strm_eof(strm)) {
-			if (getline(strm).empty()) {
-				empty_lines += 1;
-			}
-		}
-		return empty_lines;
-	}
-
-	std::string get_rnd_hex_str(const std::size_t length)
-	{
-		static std::mt19937 eng{};
-		static std::uniform_int_distribution<int> dist(0, 15);
-
-		std::ostringstream oss{};
-		oss.setf(std::ios_base::hex, std::ios_base::basefield);
-
-		for (std::size_t i{}; i < length; ++i) {
-			oss << dist(eng);
-		}
-		return oss.str();
-	}
 }
 
 namespace testutils::rclone
@@ -223,6 +234,8 @@ namespace testutils::rclone
 
 namespace testutils::setup
 {
+	std::filesystem::path WORKDIR;
+
 	std::filesystem::path get_binary_search_path()
 	{
 		const char *const cpath = std::getenv("BINARY_SEARCH_PATH");
@@ -297,6 +310,18 @@ namespace testutils::git
 	// Global definitions of operator+s not visible from here; need to extend scope.
 	// Required for using globally defined operator+(std::string, std::filesystem::path&)
 	using ::operator+;
+
+	std::string get_rnd_hex_str(const std::size_t length)
+	{
+		static std::mt19937 eng{};
+		static std::uniform_int_distribution<int> dist(0, 15);
+		std::ostringstream oss{};
+		oss.setf(std::ios_base::hex, std::ios_base::basefield);
+		for (std::size_t i{}; i < length; ++i) {
+			oss << dist(eng);
+		}
+		return oss.str();
+	}
 
 	class git_repo {
 		int ncommits;

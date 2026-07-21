@@ -1,30 +1,59 @@
+#include <algorithm>
 #include <filesystem>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 #include <cstdlib>
 
 #include "githlpr.hpp"
 
-bool githlpr::has_valid_git_dir_env()
-{
-	if (const char *const cgit_dir = std::getenv("GIT_DIR")) {
-		return std::filesystem::is_directory(cgit_dir);
-	}
-	return false;
-}
-
 namespace githlpr
 {
+	bool has_valid_git_dir_env()
+	{
+		if (const char *const cgit_dir = std::getenv("GIT_DIR")) {
+			return std::filesystem::is_directory(cgit_dir);
+		}
+		return false;
+	}
+
+	void git_cmd_handler::ping(std::ostream& reply)
+	{
+		reply << replies::ping << std::endl;
+	}
+
+	void git_cmd_handler::capabilities(std::ostream& reply)
+	{
+		for (const std::string_view& cap : replies::caps) {
+			reply << cap << std::endl;
+		}
+	}
+
+	void git_cmd_handler::list(std::ostream&)
+	{
+	}
+
+	void git_cmd_handler::push(std::ostream&, const std::vector<std::string>&)
+	{
+	}
+
+	void git_cmd_handler::fetch(std::ostream&, const std::vector<std::string>&)
+	{
+		throw std::runtime_error("could not parse fetch parameters");
+	}
+
 	std::string get_nth_str_word(const std::string_view& str, const size_t n)
 	{
 		std::istringstream cmdstr{std::string(str)};
 		std::string word_n{};
 		for (size_t i{}; i < n; i++) {
+			word_n.clear();
 			cmdstr >> std::skipws >> word_n;
 		}
 		return word_n;
@@ -39,34 +68,56 @@ namespace githlpr
 		colon_pos += 1;
 		return get_nth_str_word(push_args.substr(colon_pos, push_args.length() - colon_pos), 1);
 	}
+}
 
-	git_cmd_t get_cmd_type(const std::string_view& cmd)
+namespace githlpr::cmd
+{
+	const std::array<const std::reference_wrapper<const git_cmd>, 6> useable_cmds{
+		blank_line,
+		ping,
+		caps,
+		list,
+		push,
+		fetch
+	};
+
+	std::reference_wrapper<const git_cmd> get_cmd(const std::string_view& prefix, const std::array<const std::reference_wrapper<const git_cmd>, 6>& cmd_list, const git_cmd& not_found_fallback)
 	{
-		if        (cmd == githlpr::cmds::caps) {
-			return git_cmd_t::CAPABILITIES;
-		} else if (cmd == githlpr::cmds::push) {
-			return git_cmd_t::PUSH;
-		} else if (cmd == githlpr::cmds::list) {
-			return git_cmd_t::LIST;
-		} else if (cmd == githlpr::cmds::ping) {
-			return git_cmd_t::PING;
-		} else if (cmd == githlpr::cmds::fetch) {
-			return git_cmd_t::FETCH;
-		} else if (cmd.empty()) {
-			return git_cmd_t::BLANK_LINE;
+		auto find = std::find_if(
+				cmd_list.cbegin(),
+				cmd_list.cend(),
+				[prefix](const auto& v) {
+					return prefix == v.get().prefix;
+				});
+		if (find == cmd_list.cend()) {
+			return std::cref(not_found_fallback);
 		}
-		return git_cmd_t::UNKNOWN;
+		return *find;
 	}
 
-	void write_caps(std::ostream& reply)
+	std::ostream& operator<<(std::ostream& strm, const git_cmd cmd)
 	{
-		for (const std::string_view& cap : githlpr::replies::caps) {
-			reply << cap << std::endl;
-		}
+		strm << cmd.prefix;
+		return strm;
 	}
 
-	void git_cmd_handler::fetch(void)
+	bool git_cmd::operator==(const git_cmd& other) const
 	{
-		throw std::runtime_error("could not parse fetch parameters");
+		return id == other.id;
+	}
+
+	bool git_cmd::operator!=(const git_cmd& other) const
+	{
+		return not operator==(other);
+	}
+
+	git_cmd::operator std::string_view() const
+	{
+		return prefix;
+	}
+
+	git_cmd::operator std::string() const
+	{
+		return std::string(prefix);
 	}
 }
